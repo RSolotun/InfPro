@@ -1,0 +1,20 @@
+#!/usr/bin/perl -w
+
+$PROCDIR = $ENV{'PROCDIR'};
+$MAEDIR = $ENV{'MAEDIR'};
+$INFODIR = $ENV{'INFODIR'};
+$GRUPO = $ENV{'GRUPO'};
+
+print "$GRUPO$PROCDIR\n";
+print "$GRUPO$MAEDIR\n";
+print "$GRUPO$INFODIR\n";
+
+#asignacion de variables
+my $PROCDIRCOMPLETO = $GRUPO.$PROCDIR;
+print "$PROCDIRCOMPLETO\n";
+
+my $MAEDIRCOMPLETO = $GRUPO.$MAEDIR;
+print "$MAEDIRCOMPLETO\n";
+
+my $INFODIRCOMPLETO = $GRUPO.$INFODIR;
+print "$INFODIRCOMPLETO\n";
