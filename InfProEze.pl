@@ -4,18 +4,8 @@ use Getopt::Long;
 use constant false => 0;
 use constant true  => 1;
 
-
-my $j=0; 
-my $directorio;
-my $archivo;
-
-
 main();
 
-
-
-
-    
 
 sub ayuda{
 	imprimir("InfPro: El propósito de este comando es resolver consultas sobre los documentos protocolizados y emitir informes y estadisticas sobre ellos.");
@@ -61,9 +51,9 @@ sub esAmbienteValido{
    if ( ! defined $GRUPO || $GRUPO eq "" || ! defined $PROCDIR || $PROCDIR eq "" || ! defined $MAEDIR || $MAEDIR eq "" || ! defined $INFODIR || $INFODIR eq "" )
    {
       imprimir("Ambiente no inicializado. Ejecute el comando . IniPro.sh");
-      return 0;
+      return false;
    }
-   return 1;
+   return true;
 
 }
 
@@ -75,9 +65,9 @@ sub estaInfProCorriendo{
    if ($InfProPIDCant > 1)
    {
       imprimir("Ya se está ejecutando el programa InfPro. Por favor, espere a que el mismo termine.");
-      return 0;
+      return false;
    }
-   return 1;
+   return true;
 
 }
 
@@ -88,41 +78,35 @@ sub mostrarMenuPrencipal{
 ##ACA HAY QUE SETEAR DONDE SIGUE CORRIENDO DESPUES DE ELEGIR UNA OPCION
 sub levantarProcesoOpcion{
 
-	$parametroValido = false;
 	#primer parametro debe ser opciones
 	$opcion = shift;
 	if($opcion eq "a"){
 		imprimir("parametro a");
 		ayuda();
-		$parametroValido = true;
 	}
+
 	if($opcion eq "c"){
 		imprimir("parametro c");
-		$parametroValido = true;
-	}
-	if($opcion eq "i"){
-		imprimir("parametro i");
-		$parametroValido = true;
-	}
-	if($opcion eq "e"){
-		imprimir("parametro e");
-		$parametroValido = true;
+		consulta(true);
 	}
 	if($opcion eq "gc"){
 		imprimir("parametro gc");
-		$parametroValido = true;
+		consulta(false);
 	}
-	if($opcion eq "gi"){
-		imprimir("parametro gi");
-		$parametroValido = true;
+	if($opcion eq "e"){
+		imprimir("parametro e");
 	}
 	if($opcion eq "ge"){
 		imprimir("parametro ge");
-		$parametroValido = true;
+	}
+	if($opcion eq "gi"){
+		imprimir("parametro gi");
+	}
+	if($opcion eq "i"){
+		imprimir("parametro i");
 	}
 	if($opcion eq "s"){
-		imprimir("parametro s");
-		$parametroValido = true;
+		imprimir("cerrando InfPro");
 		exit 1;
 	}
 }
@@ -137,7 +121,7 @@ sub main{
 	}
 			
 	#mostrarMenuPrencipal();
-	while(1==1){
+	while(true){
 		menuPrincipal();
 	}
 }
@@ -155,7 +139,7 @@ sub menuPrincipal{
 	chomp($entrada);	
 	
 	#Loop infinito hasta que se ingrese opcion valida
-	my @entradas=("a","c","gc","i","gi","e","ge","s");
+	my @entradas=("a","c","gc","i","gi","e","ge","s", "");
 	while(!in_array($entrada,\@entradas) ){
 		imprimir("Opcion incorrecta. Intente nuevamente: ");
 		$entrada = <STDIN>;
@@ -165,6 +149,14 @@ sub menuPrincipal{
 	return $entrada;
 }
 
-
+sub consulta{
+	$conGuardar= shift;
+	imprimir("CONSULTANDOOOOOOOOOO");
+	if($conGuardar){
+		imprimir("guardando");
+	}else{
+		imprimir("sin Guardar");
+	}
+}
 
 
