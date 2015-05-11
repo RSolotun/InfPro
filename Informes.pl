@@ -362,7 +362,7 @@ sub ingresarFiltroPorEmisor{
 
 sub cargarHashArchivosProtocolizados{
 	my %hash_archivos;
-	my @archivosProtocolizados = cargarArchivos($GRUPO.$PROCDIR);
+	my @archivosProtocolizados = cargarArchivosProtocolizados($GRUPO.$PROCDIR);
 	foreach my $archivo (@archivosProtocolizados){
 		chomp($archivo);
 		$auxArchivo=$archivo;
@@ -378,7 +378,7 @@ sub cargarHashArchivosProtocolizados{
 	return %hash_archivos;
 }
 
-sub cargarArchivos{
+sub cargarArchivosProtocolizados{
 	$directorio_padre = $_[0];
 	my @rutas;
 	opendir(DP, $directorio_padre) || die "No puede abrirse el directorio $directorio_padre\n";
@@ -390,12 +390,26 @@ sub cargarArchivos{
 				opendir(DH, $nombre_directorio_hijo) || die "No puede abrirse el directorio $nombre_directorio_hijo";
 				while (my $archivo = readdir(DH)) {
 					if ( ($archivo ne ".") && ($archivo ne "..") ){
-						$archivo = $nombre_directorio_hijo.$archivo."\n";
+						$archivo = $nombre_directorio_hijo.$archivo;
 						push(@rutas,$archivo);
 					}
 				}
 				close(DH);
 			}
+		}
+	}
+	closedir(DP);
+	return (@rutas);
+}
+
+sub cargarArchivos{
+	$directorio_padre = $_[0];
+	my @rutas;
+	opendir(DP, $directorio_padre) || die "No puede abrirse el directorio $directorio_padre\n";
+
+	while (my $archivo = readdir(DP)) {
+		if ( ($archivo ne ".") && ($archivo ne "..") ){
+			push(@rutas,$directorio_padre."/".$archivo);
 		}
 	}
 	closedir(DP);
@@ -478,7 +492,8 @@ sub filtrarRegistrosProtocolizados{
 		my ($gestion, $anioNorma, $codNorma) = (split ";" , $key);
 		if($filtro_gestion ne ""){
 			my $descGestion = $hash_gestiones{$gestion};
-			if(lc($filtro_gestion) ne lc($descGestion)){
+			my $aux = lc($filtro_gestion);
+			if( lc($descGestion) !~ /$aux/g){
 				next;
 			}
 		}
@@ -505,7 +520,8 @@ sub filtrarRegistrosProtocolizados{
 			}
 			if($filtro_emisor ne ""){
 				my $descEmisor = $hash_emisores{$codEmisor};
-				if(lc($filtro_emisor) ne lc($descEmisor)){
+				my $aux = lc($filtro_emisor);
+				if( lc($descEmisor) !~ /$aux/g ){
 					next;
 				}		
 			}
@@ -526,8 +542,8 @@ sub nombreArchivoConsultas{
 	while ($i < $cantArchivos){
 		$archivo = $archivos[$i];
 		chomp($archivo);
-		substr($archivo, rindex($archivo, '/')) = '';
-		if ( $archivo =~ /"resultados"/g ){
+		substr($archivo, 0, rindex($archivo, '/')+1) = '';
+		if ( $archivo =~ /resultados/g ){
 			$nro=(split "_", $archivo)[1];
 			if ($ultimoNroUsado < $nro){
 				$ultimoNroUsado = $nro;
@@ -535,7 +551,6 @@ sub nombreArchivoConsultas{
 		}
 		$i++;
 	}	
-	
 	$sigNro = $ultimoNroUsado + 1;
 	$result = sprintf('%03d',$sigNro);
 	$nombreArchivo = $GRUPO.$INFODIR."/resultados_".$result;
