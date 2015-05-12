@@ -80,7 +80,7 @@ sub esAmbienteValido{
 
 sub estaInfProCorriendo{
 
-   my $InfProPIDCant=`ps ax | grep -v "grep" | grep -v "gedit" | grep -o "InfPro" | sed 's-\(^ *\)\([0-9]*\)\(.*\$\)-\2-g' | wc -l`;
+   my $InfProPIDCant=`ps ax | grep -v "grep" | grep -v "gedit" | grep -o "InfPro.pl" | sed 's-\(^ *\)\([0-9]*\)\(.*\$\)-\2-g' | wc -l`;
    if ($InfProPIDCant > 1)
    {
       imprimir("Ya se está ejecutando el programa InfPro. Por favor, espere a que el mismo termine.");
@@ -170,6 +170,7 @@ sub consulta{
 	my $palabra_clave = ingresarPalabraClave();
 	my @registros = filtrarRegistrosProtocolizados();
 	my @registrosAOrdenar;
+	my $hayResultados = false;
 	foreach $reg (@registros){
 		my ($causante,$extracto) = (split ";", $reg)[4,5];
 		my $peso=calcularPesoRegistro($causante,$extracto,$palabra_clave);
@@ -179,12 +180,13 @@ sub consulta{
 	my @regOrdPorFecha = sort{((split "/", (split ";", $b)[2])[2]).((split "/", (split ";", $b)[2])[1]).((split "/", (split ";", $b)[2])[0]) cmp ((split "/", (split ";", $a)[2])[2]).((split "/", (split ";", $a)[2])[1]).((split "/", (split ";", $a)[2])[0])} @registrosAOrdenar;
 	my @regisrosOrdenados = sort{(split ";", $b)[0] <=> (split ";", $a)[0]} @regOrdPorFecha;
 	foreach $reg (@regisrosOrdenados){
+		$hayResultados = true;
 		my ($peso,$fechaNorma,$nroNorma,$anioNorma,$causante,$extracto,$codGestion,$codNorma,$codEmisor) = (split ";", $reg)[0,2,3,4,5,6,12,13,14];
 		imprimir($codNorma." ".$hash_emisores{$codEmisor}."(".$codEmisor.") ".$nroNorma."/".$anioNorma." ".$codGestion." ".$fechaNorma." ".$peso);
 		imprimir($causante);
 		imprimir($extracto);
 	}
-	if($conGuardar){
+	if($conGuardar && $hayResultados){
 		my $nombreArchivo = nombreArchivoConsultas();
 		open(my $fh, '>', $nombreArchivo) || die "No puede abrirse el archivo $nombreArchivo\n";
 		foreach $reg (@regisrosOrdenados){
@@ -192,7 +194,10 @@ sub consulta{
 			print $fh $codNorma.";".$hash_emisores{$codEmisor}.";".$codEmisor.";".$nroNorma.";".$anioNorma.";".$codGestion.";".$fechaNorma.";".$causante.";".$extracto.";".$idReg."\n";
 		}
 		close $fh;
-		imprimir("Consulta grabada en $nombreArchivo");
+		imprimir("\nConsulta grabada en $nombreArchivo.\n");
+	}
+	if(! $hayResultados ){
+		imprimir("\nNo se encontraron registros que cumplan con los filtros.\n");
 	}
 }
 
@@ -203,6 +208,7 @@ sub informe{
 	my @registros = filtrarRegistrosConsultados(@filtroArchivos);
 	my @registrosUnicos = uniq(@registros);
 	my @registrosAOrdenar;
+	my $hayResultados = false;
 	foreach $reg (@registros){
 		my ($causante,$extracto) = (split ";", $reg)[7,8];
 		my $peso=calcularPesoRegistro($causante,$extracto,$palabra_clave);
@@ -212,12 +218,13 @@ sub informe{
 	my @regOrdPorFecha = sort{((split "/", (split ";", $b)[7])[2]).((split "/", (split ";", $b)[7])[1]).((split "/", (split ";", $b)[7])[0]) cmp ((split "/", (split ";", $a)[7])[2]).((split "/", (split ";", $a)[7])[1]).((split "/", (split ";", $a)[7])[0])} @registrosAOrdenar;
 	my @regisrosOrdenados = sort{(split ";", $b)[0] <=> (split ";", $a)[0]} @regOrdPorFecha;
 	foreach $reg (@regisrosOrdenados){
+		$hayResultados = true;
 		my ($peso,$codNorma,$emisor,$codEmisor,$nroNorma,$anioNorma,$codGestion,$fechaNorma,$causante,$extracto,$idReg) = (split ";", $reg);
 		imprimir($codNorma." ".$hash_emisores{$codEmisor}."(".$codEmisor.") ".$nroNorma."/".$anioNorma." ".$codGestion." ".$fechaNorma." ".$peso);
 		imprimir($causante);
 		imprimir($extracto);
 	}
-	if($conGuardar){
+	if($conGuardar && $hayResultados){
 		my $nombreArchivo = nombreArchivoInformes();
 		open(my $fh, '>', $nombreArchivo) || die "No puede abrirse el archivo $nombreArchivo\n";
 		foreach $reg (@regisrosOrdenados){
@@ -225,9 +232,11 @@ sub informe{
 			print $fh $codNorma.";".$hash_emisores{$codEmisor}.";".$codEmisor.";".$nroNorma.";".$anioNorma.";".$codGestion.";".$fechaNorma.";".$causante.";".$extracto.";".$idReg."\n";
 		}
 		close $fh;
-		imprimir("Informe grabado en $nombreArchivo");
+		imprimir("\nInforme grabado en $nombreArchivo.\n");
 	}
-
+	if(! $hayResultados ){
+		imprimir("\nNo se encontraron registros que cumplan con los filtros.\n");
+	}
 }
 
 sub estadistica{
@@ -242,6 +251,7 @@ sub estadistica{
 	my %sumarizacionDisposiciones;
 	my %sumarizacionConvenios;
 	my %sumarizacionEmisores;
+	my $hayResultados = false;
 	foreach $reg (@regisrosOrdenados){
 		my ($fechaNorma,$anioNorma,$codGestion,$codNorma,$codEmisor) = (split ";", $reg)[2,3,11,12,13];
 		if ( not exists $sumarizacionEmisores{ $codGestion.";".$anioNorma } ){ 
@@ -264,6 +274,7 @@ sub estadistica{
 
 	my @hash_claves_ordenadas = ordenarClavesEstadistica(keys %sumarizacionEmisores);
 	foreach my $key (@hash_claves_ordenadas) {
+		$hayResultados = true;
 		print ("Gestion: ".$hash_gestiones{(split ";", $key)[0]}." Año: ".(split ";", $key)[1]." Emisores: ");
 		my $listaEmisores = "";
 		foreach my $emisor (@{$sumarizacionEmisores{$key}}){
@@ -275,7 +286,7 @@ sub estadistica{
 		imprimir("Cantidad de disposiciones: ".$sumarizacionDisposiciones{$key});
 		imprimir("Cantidad de convenios: ".$sumarizacionConvenios{$key});
 	}
-	if($conGuardar){
+	if($conGuardar && $hayResultados){
 		my $nombreArchivo = nombreArchivoEstadisticas();
 		open(my $fh, '>', $nombreArchivo) || die "No puede abrirse el archivo $nombreArchivo\n";
 		foreach my $key (@hash_claves_ordenadas) {
@@ -291,7 +302,10 @@ sub estadistica{
 			print $fh "Cantidad de convenios: ".$sumarizacionConvenios{$key}."\n";
 		}
 		close $fh;
-		imprimir("Estadistica grabada en $nombreArchivo");
+		imprimir("\nEstadistica grabada en $nombreArchivo.\n");
+	}
+	if(! $hayResultados ){
+		imprimir("\nNo se encontraron registros que cumplan con los filtros.\n");
 	}
 }
 
@@ -636,7 +650,7 @@ sub filtrarRegistrosConsultados{
 			if($filtro_gestion ne ""){
 				my $descGestion = $hash_gestiones{$gestion};
 				my $aux = lc($filtro_gestion);
-				if( lc($descGestion) !~ /$aux/g){
+				if( ((!defined $descGestion) || (lc($descGestion) !~ /$aux/g)) && ($aux ne lc($gestion)) ){
 					next;
 				}
 			}
@@ -647,7 +661,9 @@ sub filtrarRegistrosConsultados{
 				}
 			}
 			if($filtro_tipo_norma ne ""){
-				if(lc($filtro_tipo_norma) ne lc($codNorma)){
+				my $descNorma = $hash_normas{$codNorma};
+				my $aux = lc($filtro_tipo_norma);
+				if( ((!defined $descNorma) || (lc($descNorma) !~ /$aux/g)) && ($aux ne lc($codNorma)) ){
 					next;
 				}		
 			}
@@ -660,7 +676,7 @@ sub filtrarRegistrosConsultados{
 			if($filtro_emisor ne ""){
 				my $descEmisor = $hash_emisores{$codEmisor};
 				my $aux = lc($filtro_emisor);
-				if( lc($descEmisor) !~ /$aux/g ){
+				if( ((!defined $descEmisor) || (lc($descEmisor) !~ /$aux/g)) && ($aux ne lc($codEmisor)) ){
 					next;
 				}		
 			}
@@ -681,7 +697,7 @@ sub filtrarRegistrosProtocolizados{
 		if($filtro_gestion ne ""){
 			my $descGestion = $hash_gestiones{$gestion};
 			my $aux = lc($filtro_gestion);
-			if( lc($descGestion) !~ /$aux/g){
+			if( ((!defined $descGestion) || (lc($descGestion) !~ /$aux/g)) && ($aux ne lc($gestion)) ){
 				next;
 			}
 		}
@@ -692,7 +708,9 @@ sub filtrarRegistrosProtocolizados{
 			}
 		}
 		if($filtro_tipo_norma ne ""){
-			if(lc($filtro_tipo_norma) ne lc($codNorma)){
+			my $descNorma = $hash_normas{$codNorma};
+			my $aux = lc($filtro_tipo_norma);
+			if( ((!defined $descNorma) || (lc($descNorma) !~ /$aux/g)) && ($aux ne lc($codNorma))){
 				next;
 			}		
 		}
@@ -709,7 +727,7 @@ sub filtrarRegistrosProtocolizados{
 			if($filtro_emisor ne ""){
 				my $descEmisor = $hash_emisores{$codEmisor};
 				my $aux = lc($filtro_emisor);
-				if( lc($descEmisor) !~ /$aux/g ){
+				if( ((!defined $descEmisor) || (lc($descEmisor) !~ /$aux/g)) && ($aux ne lc($codEmisor)) ){
 					next;
 				}		
 			}
@@ -730,7 +748,7 @@ sub filtrarRegistrosProtocolizadosParaEstadisticas{
 		if($filtro_gestion ne ""){
 			my $descGestion = $hash_gestiones{$gestion};
 			my $aux = lc($filtro_gestion);
-			if( lc($descGestion) !~ /$aux/g){
+			if( ((!defined $descGestion) || (lc($descGestion) !~ /$aux/g)) && ($aux ne lc($gestion)) ){
 				next;
 			}
 		}
