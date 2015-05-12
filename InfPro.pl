@@ -238,8 +238,6 @@ sub estadistica{
 	my $cantResoluciones = 0;
 	my $cantDisposiciones = 0;
 	my $cantConvenios = 0;
-	my $gestionActual;
-	my $anioActual;
 	my %sumarizacionResoluciones;
 	my %sumarizacionDisposiciones;
 	my %sumarizacionConvenios;
@@ -293,7 +291,7 @@ sub estadistica{
 			print $fh "Cantidad de convenios: ".$sumarizacionConvenios{$key}."\n";
 		}
 		close $fh;
-		imprimir("Consulta grabada en $nombreArchivo");
+		imprimir("Estadistica grabada en $nombreArchivo");
 	}
 }
 
